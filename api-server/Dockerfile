@@ -1,3 +1,11 @@
-FROM python:3-alpine
+FROM ruby:2.5-alpine
 
-RUN pip install flask
+# copy files to the image
+COPY src/* /root/api-server
+
+# install needed gems
+RUN gem install bundler && \
+    cd /root/api-server && \
+    bundle install
+
+CMD cd /root/api-server && ruby app.rb
