@@ -1,1 +1,7 @@
-version: '2'
+version: '3'
+
+services:
+  lights-controller:
+    build: lights-controller/
+    #ports:
+    # - "7890:7890"
