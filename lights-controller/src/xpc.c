@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 // TODO: improve error handling
 
@@ -17,10 +18,28 @@ extern uv_loop_t* loop; // defined in main.c
 int XPC_PORT = DEFAULT_XPC_PORT;
 uv_tcp_t xpc;
 
-void xpc_packet_parse(uv_buf_t* buf) {
+struct write_req_t {
+	uv_write_t req;
+	uv_buf_t buffer;
+};
+
+void xpc_write_cb(uv_write_t* req, int status) {
+	struct write_req_t* wr;
+
+	if (status)
+		fprintf(stderr, "Write error: %s.\n", uv_strerror(status));
+
+	wr = (struct write_req_t*)req;
+
+	free(wr->buf.base);
+	free(wr);
+}
+
+void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 	uint8_t* buffer;
 	uint8_t op, channel;
 	uint16_t length, start, end;
+	struct write_req_t* req;
 
 	buffer = (uint8_t*)buf->base;
 	if (buffer == NULL)
@@ -29,18 +48,23 @@ void xpc_packet_parse(uv_buf_t* buf) {
 	op = buffer[0];
 	channel = MIN(buffer[1], strip_last_channel(&strip));
 
+#define __bad_malloc_error(p) if(!(p)) { \
+		fprintf(stderr, "Error malloc'ing response.\n"); \
+		return; }
+
 	switch (op) {
 	case PROTO_BUFFER_START_SET: // buffer start set: [op][channel][short: length][uint8_t*: ...]
-		length = *((uint16_t*)&(buffer[2])); // get given length
+		length = ntohs(*((uint16_t*)&(buffer[2]))); // get given length
 		length = MIN(length, buf->len - 4); // get copy data length
 
 		strip_buffer_start_set(&strip, channel, (ws2811_led_t*)(&(buffer[4])),
 			length);
 		strip_renderNPM(strip);
 		break;
+
 	case PROTO_BUFFER_SPLICE: // buffer splice: [op][channel][short: start][short: end][uint8_t*: data]
-		start = *((uint16_t*)&(buffer[2]));
-		end = *((uint16_t*)&(buffer[4]));
+		start = ntohs(*((uint16_t*)&(buffer[2])));
+		end = ntohs(*((uint16_t*)&(buffer[4])));
 		length = end - start; // given length
 		length = MIN(buf->len - 6, length); // limited to data length
 
@@ -49,9 +73,37 @@ void xpc_packet_parse(uv_buf_t* buf) {
 		strip_renderNPM(strip);
 		break;
 
+	case PROTO_BUFFER_INSERT: // buffer insert: [op][channel][ushort: start][ushort: len][data...]
+		start = ntohs(*((uint16_t*)&(buffer[2])));
+		length = ntohs(*((uint16_t*)&(buffer[4])));
+
+		strip_buffer_insert()
+
+	case PROTO_BUFFER_READ: // buffer read: [op][channel]
+		// writes back: [ws2811_led_t* buffer]
+		length = strip_channel_count(&strip, channel);
+
+		req = (struct write_req_t*)malloc(sizeof(*req));
+		__bad_malloc_error(req);
+
+		req->buf = uv_buf_init((char*)strip->strip.channel[channel].leds,
+			length * sizeof(ws2811_led_t));
+		uv_write((uv_write_t*)req, stream, &req->buf, 1, xpc_write_cb);
+
 	case PROTO_STRIP_GET_COUNT: // get strip count: [op][channel]
+		// writes back: [ushort: count]
+		length = htons(strip_channel_count(&strip, channel));
+
+		req = (struct write_req_t*)malloc(sizeof(*req));
+		__bad_malloc_error(req);
+
+		req->buf = uv_buf_init((char*)&length, sizeof(uint16_t));
+		uv_write(req, stream, &(req->buf), 1, xpc_write_cb);
 		break;
-	case PROTO_STRIP_CHANGE_COUNT: // change strip length: [op][channel]
+
+	case PROTO_STRIP_CHANGE_COUNT: // change strip length: [op][channel][ushort: length]
+		length = noths(*((uint16_t*)(&(buffer[2]))));
+		strip_resize(&strip, channel, length);
 		break;
 
 	case PROTO_VENDOR_SPECIFIC: // vendor specific
@@ -68,7 +120,7 @@ void on_xpc_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 	if (nread > 0) {
 		parsebuf.base = buf->base;
 		parsebuf.len = nread;
-		xpc_packet_parse(&parsebuf);
+		xpc_packet_parse(stream, &parsebuf);
 	} else if (nread < 0) {
 		if (nread != UV_EOF)
 			fprintf(stderr, "Error reading XPC packet data: %s\n",

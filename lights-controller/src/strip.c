@@ -90,6 +90,22 @@ void strip_buffer_sub_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 	memcpy(&(buf[start]), buffer, length);
 }
 
+void strip_buffer_insert(strip_t* strip, int channel, ws2811_led_t* buffer,
+	int blen, int start) {
+	int length;
+
+	length = 
+}
+
+void strip_buffer_rotate(strip_t* strip, int channel, int amount) {
+
+}
+
+void strip_buffer_shift(strip_t* strip, int channel, int amount,
+	ws2811_led_t insert) {
+
+}
+
 void strip_render(strip_t* strip) {
 	ws2811_render(&(strip->strip));
 }
