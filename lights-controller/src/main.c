@@ -6,51 +6,14 @@
 
 #include "xpc.h"
 #include "qpc.h"
+#include "strip.h"
 
-#include "ws2811.h"
+extern int XPC_PORT; // defined in xpc.c
+extern int QPC_PORT; // defined in qpc.c
+extern strip_t strip; // defined in strip.c
 
-#define DEFAULT_FREQ 1200000
-#define DEFAULT_GPIO 10
-#define DEFAULT_DMA 10
-#define DEFAULT_LEDCOUNT 50
-#define DEFAULT_STRIPTYPE WS2811_STRIP_BGR
-#define DEFAULT_INVERT 0
-#define DEFAULT_BRIGHTNESS 255
-
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-
-int QPC_PORT = 7891;
-int XPC_PORT = 7890;
 int VERBOSE = 0;
-
-ws2811_t strip = {
-	.freq = DEFAULT_FREQ,
-	.dmanum = DEFAULT_DMA,
-	.channel = {
-		[0] = {
-			.gpionum = DEFAULT_GPIO,
-			.count = DEFAULT_LEDCOUNT,
-			.invert = DEFAULT_INVERT,
-			.brightness = DEFAULT_BRIGHTNESS,
-			.strip_type = DEFAULT_STRIPTYPE
-		},
-		[1] = {
-			.gpionum = 0,
-			.count = 0,
-			.invert = 0,
-			.brightness = 0,
-			.strip_type = 0
-		}
-	}
-};
-
 uv_loop_t* loop;
-
-void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-	buf->base = (char*)malloc(suggested_size); // TODO: where is the free?
-	buf->len = suggested_size;
-}
 
 void print_help(char* argv0);
 void print_usage(char* argv0);
@@ -115,7 +78,7 @@ void parse_parameters(int argc, char** argv) {
 		{"ledcount", required_argument, NULL, 'c'},
 		{"gpio", required_argument, NULL, 'g'},
 		{"strip-type", required_argument, NULL, 't'},
-		{"invert", no_argument, &(strip.channel[0].invert), 1},
+		{"invert", no_argument, &(strip.strip.channel[0].invert), 1},
 		{"brightness", required_argument, NULL, 'b'},
 		{0,0,0,0}
 	};
@@ -143,44 +106,44 @@ void parse_parameters(int argc, char** argv) {
 			exit(EXIT_SUCCESS);
 			break;
 		case 'f':
-			strip.freq = atoi(optarg);
+			strip.strip.freq = atoi(optarg);
 			break;
 		case 'd':
-			strip.dmanum = atoi(optarg);
+			strip.strip.dmanum = atoi(optarg);
 			break;
 		case 'c':
-			strip.channel[0].count = atoi(optarg);
+			strip.strip.channel[0].count = atoi(optarg);
 			break;
 		case 'g':
-			strip.channel[0].gpionum = atoi(optarg);
+			strip.strip.channel[0].gpionum = atoi(optarg);
 			break;
 		case 't':
 			if (!strcasecmp(optarg, "rgb"))
-				strip.channel[0].strip_type = WS2811_STRIP_RGB;
+				strip.strip.channel[0].strip_type = WS2811_STRIP_RGB;
 			else if (!strcasecmp(optarg, "rbg"))
-				strip.channel[0].strip_type = WS2811_STRIP_RBG;
+				strip.strip.channel[0].strip_type = WS2811_STRIP_RBG;
 			else if (!strcasecmp(optarg, "grb"))
-				strip.channel[0].strip_type = WS2811_STRIP_GRB;
+				strip.strip.channel[0].strip_type = WS2811_STRIP_GRB;
 			else if (!strcasecmp(optarg, "gbr"))
-				strip.channel[0].strip_type = WS2811_STRIP_GBR;
+				strip.strip.channel[0].strip_type = WS2811_STRIP_GBR;
 			else if (!strcasecmp(optarg, "bgr"))
-				strip.channel[0].strip_type = WS2811_STRIP_BGR;
+				strip.strip.channel[0].strip_type = WS2811_STRIP_BGR;
 			else if (!strcasecmp(optarg, "brg"))
-				strip.channel[0].strip_type = WS2811_STRIP_BRG;
+				strip.strip.channel[0].strip_type = WS2811_STRIP_BRG;
 			else if (!strcasecmp(optarg, "rgbw"))
-				strip.channel[0].strip_type = SK6812_STRIP_RGBW;
+				strip.strip.channel[0].strip_type = SK6812_STRIP_RGBW;
 			else if (!strcasecmp(optarg, "grbw"))
-				strip.channel[0].strip_type = SK6812_STRIP_GRBW;
+				strip.strip.channel[0].strip_type = SK6812_STRIP_GRBW;
 			else {
 				printf("invalid strip type: %s\n", optarg);
 				exit(EXIT_FAILURE);
 			}
 			break;
 		case 'i':
-			strip.channel[0].invert = 1;
+			strip.strip.channel[0].invert = 1;
 			break;
 		case 'b':
-			strip.channel[0].brightness = (uint8_t)atoi(optarg);
+			strip.strip.channel[0].brightness = (uint8_t)atoi(optarg);
 			break;
 		}
 	}

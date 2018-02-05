@@ -1,13 +1,21 @@
 #include "qpc.h"
 
+#include "utils.h"
+#include "strip.h"
+
+#include "proto.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-extern in QPC_PORT;
-extern ws2811_t strip;
-extern uv_loopt_t* loop;
+// TODO: improve error handling
 
+extern int QPC_PORT;
+extern strip_t strip;
+extern uv_loop_t* loop;
+
+int QPC_PORT = DEFAULT_QPC_PORT;
 uv_udp_t qpc;
 
 void qpc_packet_parse(const uv_buf_t* buf) {
@@ -20,32 +28,31 @@ void qpc_packet_parse(const uv_buf_t* buf) {
 		return;
 
 	op = buffer[0];
-	channel = buffer[1];
+	channel = MIN(buffer[1], strip_last_channel(&strip));
 
 	switch (op) {
-	case 0: // buffer start set: [op: 0][short: length][uint8_t*: ...]
+	case PROTO_BUFFER_START_SET: // buffer start set: [op: 0][short: length][uint8_t*: ...]
 		length = *((uint16_t*)&(buffer[2])); // get given length
 		length = MIN(length, buf->len - 4); // get copy data length
-		length = MIN(length, strip.channel[channel].count); // get real copy len
 
-		memcpy(strip.channel[channel].leds, &(buffer[4]), length);
-		ws2811_render(&strip);
+		strip_buffer_start_set(&strip, channel, (ws2811_led_t*)(&(buffer[4])),
+			length);
+		strip_renderNPM(strip);
 		break;
-	case 1: // buffer splice: [op: 1][short: start][short: end][uint8_t*: data]
+	case PROTO_BUFFER_SPLICE: // buffer splice: [op: 1][short: start][short: end][uint8_t*: data]
 		start = *((uint16_t*)&(buffer[2]));
 		end = *((uint16_t*)&(buffer[4]));
 		length = end - start; // given length
 		length = MIN(buf->len - 6, length); // limited to data length
-		length = MIN(length, strip.channel[channel].count - start);
 
-		if (length > 0)
-			memcpy(strip.channel[channel].leds, &(buffer[6]), length);
-
-		ws2811_render(&strip);
+		strip_buffer_sub_set(&strip, channel, (ws2811_led_t*)(&(buffer[6])),
+			length, start, end);
+		strip_renderNPM(strip);
+		break;
 	case 255: // vendor specific
 		break;
 	default:
-		fprintf("request for undefined op\n");
+		fprintf(stderr, "Request for undefined op\n");
 		break;
 	}
 }
@@ -73,8 +80,10 @@ void on_qpc_read(uv_handle_t* handle, ssize_t nread, const uv_buf_t* buf,
 }
 
 void qpc_init() {
+	struct sockaddr_in recv_address;
+
 	uv_udp_init(loop, &qpc);
-	struct sockaddr_in recv_address = uv_ip4_addr("0.0.0.0", QPC_PORT);
+	uv_ip4_addr("0.0.0.0", QPC_PORT, &recv_address);
 	uv_udp_bind(&qpc, &recv_address, 0);
 	uv_udp_recv_start(&qpc, alloc_cb, on_qpc_read);
 }
