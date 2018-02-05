@@ -4,6 +4,9 @@
 #include <uv.h>
 #include <getopt.h>
 
+#include "xpc.h"
+#include "qpc.h"
+
 #include "ws2811.h"
 
 #define DEFAULT_FREQ 1200000
@@ -43,109 +46,33 @@ ws2811_t strip = {
 };
 
 uv_loop_t* loop;
-uv_udp_t qpc;
-uv_tcp_t xpc;
 
-uv_buf_t alloc_buffer(uv_handle_t *handle, size_t suggested_size) {
-  return uv_buf_init((char*) malloc(suggested_size), suggested_size);
+void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
+	buf->base = (char*)malloc(suggested_size); // TODO: where is the free?
+	buf->len = suggested_size;
 }
 
-void on_xpc_connection(uv_stream_t* connection, int status) {
-	int r;
-	uv_stream_t client;
+void print_help(char* argv0);
+void print_usage(char* argv0);
+void parse_parameters(int argc, char** argv);
 
-	if (status < 0) {
-		fprintf(stderr, "Error receiving XPC connection (status: %d).\n",
-			status);
-		return;
-	}
+int main(int argc, char* argv[]) {
+	// set uv loop
+	loop = uv_default_loop();
 
-	
-}
+	// parse command parameters
+	parse_parameters(argc, argv);
 
-void xpc_init() {
-	struct sockaddr_in addr;
-	int r;
+	// initialize the strip
+	ws2811_init(&strip);
 
-	xpc = uv_tcp_init(loop, &xpc);
-	uv_ip4_addr("0.0.0.0", XPC_PORT, &addr);
+	// initialize Quick Pixel Control handlers
+	qpc_init();
 
-	uv_tcp_bind(&xpc, &addr, 0);
+	// run the event loop
+	uv_run(loop, UV_RUN_DEFAULT);
 
-	if ((r = uv_listen((uv_stream_t*)&xpc, 10, on_xpc_connection))) {
-		fprintf(stderr, "Error listening to XPC connections: %s.\n",
-			uv_strerror(r));
-		exit(EXIT_FAILURE);
-	}
-}
-
-void qpc_packet_parse(const uv_buf_t* buf) {
-	uint8_t* buffer;
-	uint8_t op, channel;
-	uint16_t length, start, end;
-
-	buffer = (uint8_t*)buf->base;
-	if (buffer == NULL)
-		return;
-
-	op = buffer[0];
-	channel = buffer[1];
-
-	switch (op) {
-	case 0: // buffer start set: [op: 0][short: length][uint8_t*: ...]
-		length = *((uint16_t*)&(buffer[2])); // get given length
-		length = MIN(length, buf->len - 4); // get copy data length
-		length = MIN(length, strip.channel[channel].count); // get real copy len
-
-		memcpy(strip.channel[channel].leds, &(buffer[4]), length);
-		ws2811_render(&strip);
-		break;
-	case 1: // buffer splice: [op: 1][short: start][short: end][uint8_t*: data]
-		start = *((uint16_t*)&(buffer[2]));
-		end = *((uint16_t*)&(buffer[4]));
-		length = end - start; // given length
-		length = MIN(buf->len - 6, length); // limited to data length
-		length = MIN(length, strip.channel[channel].count - start);
-
-		if (length > 0)
-			memcpy(strip.channel[channel].leds, &(buffer[6]), length);
-
-		ws2811_render(&strip);
-	case 255: // vendor specific
-		break;
-	default:
-		fprintf("request for undefined op\n");
-		break;
-	}
-}
-
-void on_qpc_read(uv_handle_t* handle, ssize_t nread, const uv_buf_t* buf,
-	const struct sockaddr* addr, unsigned flags) {
-	uv_udp_t* req;
-
-	req = (uv_udp_t*)handle;
-
-	if (addr == NULL)
-		return;
-
-	if (nread == -1) {
-		fprintf(stderr, "Error reading received QPC data.");
-		uv_close(handle, NULL);
-		free(buf->base);
-		return;
-	}
-
-	qpc_packet_parse(buf);
-
-	uv_udp_recv_stop(req);
-	free(buf->base);
-}
-
-void qpc_init() {
-	uv_udp_init(loop, &qpc);
-	struct sockaddr_in recv_address = uv_ip4_addr("0.0.0.0", QPC_PORT);
-	uv_udp_bind(&qpc, &recv_address, 0);
-	uv_udp_recv_start(&qpc, alloc_buffer, on_qpc_read);
+	return 0;
 }
 
 void print_help(char* argv0) {
@@ -257,23 +184,4 @@ void parse_parameters(int argc, char** argv) {
 			break;
 		}
 	}
-}
-
-int main(int argc, char* argv[]) {
-	// set uv loop
-	loop = uv_default_loop();
-
-	// parse command parameters
-	parse_parameters(argc, argv);
-
-	// initialize the strip
-	ws2811_init(&strip);
-
-	// initialize Quick Pixel Control handlers
-	qpc_init();
-
-	// run the event loop
-	uv_run(loop, UV_RUN_DEFAULT);
-
-	return 0;
 }
