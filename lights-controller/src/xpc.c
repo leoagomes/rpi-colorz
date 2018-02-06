@@ -20,7 +20,7 @@ uv_tcp_t xpc;
 
 struct write_req_t {
 	uv_write_t req;
-	uv_buf_t buffer;
+	uv_buf_t buf;
 };
 
 void xpc_write_cb(uv_write_t* req, int status) {
@@ -39,7 +39,9 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 	uint8_t* buffer;
 	uint8_t op, channel;
 	uint16_t length, start, end;
+	int16_t amount;
 	struct write_req_t* req;
+	ws2811_led_t in;
 
 	buffer = (uint8_t*)buf->base;
 	if (buffer == NULL)
@@ -77,17 +79,22 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		start = ntohs(*((uint16_t*)&(buffer[2])));
 		length = ntohs(*((uint16_t*)&(buffer[4])));
 
-		strip_buffer_insert(strip, channel, (ws2811_led_t*)(&(buffer[6])),
+		strip_buffer_insert(&strip, channel, (ws2811_led_t*)(&(buffer[6])),
 			MIN(length, buf->len), start);
 		strip_renderNPM(strip);
 		break;
 
 	case PROTO_BUFFER_ROTATE: // buffer rotate: [op][channel][short: amount]
 		length = ntohs(*((uint16_t*)&(buffer[2])));
-		strip_buffer_rotate(strip, channel, length);
+		amount = *(int16_t*)&length;
+		strip_buffer_rotate(&strip, channel, amount);
 		break;
 
-	case PROTO_BUFFER_SHIFT: // buffer shift: [op][channel][ushort: amount]
+	case PROTO_BUFFER_SHIFT: // buffer shift: [op][channel][short: amount][led: in]
+		length = ntohs(*((uint16_t*)&(buffer[2])));
+		amount = *(int16_t*)&length;
+		in = *(ws2811_led_t*)&(buffer[4]);
+		strip_buffer_shift(&strip, channel, amount, in);
 		break;
 
 	case PROTO_BUFFER_READ: // buffer read: [op][channel]
@@ -97,7 +104,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		req = (struct write_req_t*)malloc(sizeof(*req));
 		__bad_malloc_error(req);
 
-		req->buf = uv_buf_init((char*)strip->strip.channel[channel].leds,
+		req->buf = uv_buf_init((char*)strip.strip.channel[channel].leds,
 			length * sizeof(ws2811_led_t));
 		uv_write((uv_write_t*)req, stream, &req->buf, 1, xpc_write_cb);
 

@@ -106,8 +106,6 @@ void strip_buffer_insert(strip_t* strip, int channel, ws2811_led_t* buffer,
 	memcpy(&(buf[start]), buffer, blen * sizeof(ws2811_led_t));
 }
 
-abcdefg
-
 void strip_buffer_rotate(strip_t* strip, int channel, int amount) {
 	ws2811_led_t *buf, *tmp;
 	int direction, striplen;
@@ -157,7 +155,7 @@ void strip_buffer_rotate(strip_t* strip, int channel, int amount) {
 void strip_buffer_shift(strip_t* strip, int channel, int amount,
 	ws2811_led_t insert) {
 	ws2811_led_t *buf, *bstart, *bend, *it;
-	int striplen;
+	int striplen, direction;
 
 	buf = strip_crightbuf(strip, channel);
 	striplen = strip_channel_count(strip, channel);
