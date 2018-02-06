@@ -92,18 +92,96 @@ void strip_buffer_sub_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 
 void strip_buffer_insert(strip_t* strip, int channel, ws2811_led_t* buffer,
 	int blen, int start) {
-	int length;
+	int length, striplen;
+	ws2811_led_t* buf;
 
-	length = 
+	buf = strip_crightbuf(strip, channel);
+
+	striplen = strip_channel_count(strip, channel);
+	start = MIN(start, striplen);
+	length = MIN(blen, striplen - start);
+
+	memmove(&(buf[start + length]), &(buf[start]),
+		(striplen - (start + length)) * sizeof(ws2811_led_t));
+	memcpy(&(buf[start]), buffer, blen * sizeof(ws2811_led_t));
 }
 
-void strip_buffer_rotate(strip_t* strip, int channel, int amount) {
+abcdefg
 
+void strip_buffer_rotate(strip_t* strip, int channel, int amount) {
+	ws2811_led_t *buf, *tmp;
+	int direction, striplen;
+
+	buf = strip_crightbuf(strip, channel);
+	striplen = strip_channel_count(strip, channel);
+
+	direction = (amount < 0) ? -1 : 1;
+	amount = abs(amount);
+	amount = MIN(amount, striplen);
+
+	if (amount > striplen / 2) {
+		direction *= -1;
+		amount = striplen - amount;
+	}
+
+	tmp = (ws2811_led_t*)malloc(sizeof(ws2811_led_t) * amount);
+	if (!tmp) {
+		fprintf(stderr, "Couldn't allocate strip rotation buffer.\n");
+		return;
+	}
+
+	if (direction > 0) { // rotate right
+		// copy the last amount numbers to tmp
+		memcpy(tmp, &(buf[striplen - amount]), amount * sizeof(ws2811_led_t));
+
+		// memmove the first (striplen - amount) numbers to the end
+		memmove(&(buf[amount]), buf, (striplen - amount) * sizeof(ws2811_led_t));
+
+		// copy last amount numbers to the beginning of buf
+		memcpy(buf, tmp, amount * sizeof(ws2811_led_t));
+
+	} else { // rotate left
+		// copy first amount numbers to a temp location
+		memcpy(tmp, &(buf[amount]), amount * sizeof(ws2811_led_t));
+
+		// memmove the last (striplen - amount) to the beginnig
+		memmove(buf, &(buf[amount]),
+			(striplen - amount) * sizeof(ws2811_led_t));
+		
+		// copy tmp back into the end of buf
+		memcpy(&(buf[striplen - amount]), tmp, amount * sizeof(ws2811_led_t));
+	}
 }
 
 void strip_buffer_shift(strip_t* strip, int channel, int amount,
 	ws2811_led_t insert) {
+	ws2811_led_t *buf, *bstart, *bend, *it;
+	int striplen;
 
+	buf = strip_crightbuf(strip, channel);
+	striplen = strip_channel_count(strip, channel);
+
+	direction = (amount < 0) ? -1 : 1;
+	amount = abs(amount);
+	amount = MIN(amount, striplen);
+
+	if (amount > striplen / 2) {
+		direction *= -1;
+		amount = striplen - amount;
+	}
+
+	if (direction > 0) { // shift right
+		memcpy(&(buf[amount]), buf, (striplen - amount) * sizeof(ws2811_led_t));
+		bstart = buf;
+		bend = &(buf[amount]);
+	} else { // shift left
+		memcpy(buf, &(buf[amount]), (striplen - amount) * sizeof(ws2811_led_t));
+		bstart = &(buf[striplen - amount]);
+		bend = &(buf[striplen]);
+	}
+
+	for (it = bstart; it < bend; it++)
+		*it = insert;
 }
 
 void strip_render(strip_t* strip) {
