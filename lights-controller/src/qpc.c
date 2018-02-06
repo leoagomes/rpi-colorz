@@ -57,18 +57,15 @@ void qpc_packet_parse(const uv_buf_t* buf) {
 	}
 }
 
-void on_qpc_read(uv_handle_t* handle, ssize_t nread, const uv_buf_t* buf,
+void on_qpc_read(uv_udp_t* req, ssize_t nread, const uv_buf_t* buf,
 	const struct sockaddr* addr, unsigned flags) {
-	uv_udp_t* req;
-
-	req = (uv_udp_t*)handle;
 
 	if (addr == NULL)
 		return;
 
 	if (nread == -1) {
 		fprintf(stderr, "Error reading received QPC data.");
-		uv_close(handle, NULL);
+		uv_close((uv_handle_t*)req, NULL);
 		free(buf->base);
 		return;
 	}
@@ -84,6 +81,6 @@ void qpc_init() {
 
 	uv_udp_init(loop, &qpc);
 	uv_ip4_addr("0.0.0.0", QPC_PORT, &recv_address);
-	uv_udp_bind(&qpc, &recv_address, 0);
+	uv_udp_bind(&qpc, (struct sockaddr*)&recv_address, 0);
 	uv_udp_recv_start(&qpc, alloc_cb, on_qpc_read);
 }

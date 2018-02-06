@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include "ws2811.h"
 
 #define DEFAULT_FREQ 1200000
@@ -37,8 +38,8 @@ struct strip_t {
 
 #define strip_last_channel(s) (RPI_PWM_CHANNELS - 1)
 
-void strip_state_set(strip_t* strip, int state);
-int strip_state_get(strip_t* strip);
+void strip_state_set(strip_t* strip, int channel, int state);
+int strip_state_get(strip_t* strip, int channel);
 
 void strip_buffer_start_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 	int blen);

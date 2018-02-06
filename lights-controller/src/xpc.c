@@ -120,7 +120,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		break;
 
 	case PROTO_STRIP_CHANGE_COUNT: // change strip length: [op][channel][ushort: length]
-		length = noths(*((uint16_t*)(&(buffer[2]))));
+		length = ntohs(*((uint16_t*)(&(buffer[2]))));
 		strip_resize(&strip, channel, length);
 		break;
 
@@ -164,7 +164,7 @@ void on_xpc_connection(uv_stream_t* connection, int status) {
 	}
 	uv_tcp_init(loop, client);
 	if ((r = uv_accept(connection, client))) { //error
-		fpritnf("Error accepction XPC client: %s\n", uv_strerror(r));
+		fprintf(stderr, "Error accepction XPC client: %s\n", uv_strerror(r));
 		uv_close((uv_handle_t*)client, free);
 	} else {
 		uv_read_start(client, alloc_cb, on_xpc_read);

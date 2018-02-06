@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 	parse_parameters(argc, argv);
 
 	// initialize the strip
-	ws2811_init(&strip);
+	ws2811_init(&(strip.strip));
 
 	// initialize Quick Pixel Control handlers
 	qpc_init();
