@@ -77,7 +77,18 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		start = ntohs(*((uint16_t*)&(buffer[2])));
 		length = ntohs(*((uint16_t*)&(buffer[4])));
 
-		strip_buffer_insert()
+		strip_buffer_insert(strip, channel, (ws2811_led_t*)(&(buffer[6])),
+			MIN(length, buf->len), start);
+		strip_renderNPM(strip);
+		break;
+
+	case PROTO_BUFFER_ROTATE: // buffer rotate: [op][channel][short: amount]
+		length = ntohs(*((uint16_t*)&(buffer[2])));
+		strip_buffer_rotate(strip, channel, length);
+		break;
+
+	case PROTO_BUFFER_SHIFT: // buffer shift: [op][channel][ushort: amount]
+		break;
 
 	case PROTO_BUFFER_READ: // buffer read: [op][channel]
 		// writes back: [ws2811_led_t* buffer]

@@ -117,6 +117,7 @@ void strip_buffer_rotate(strip_t* strip, int channel, int amount) {
 
 	direction = (amount < 0) ? -1 : 1;
 	amount = abs(amount);
+	amount = amount % striplen;
 	amount = MIN(amount, striplen);
 
 	if (amount > striplen / 2) {
@@ -163,6 +164,7 @@ void strip_buffer_shift(strip_t* strip, int channel, int amount,
 
 	direction = (amount < 0) ? -1 : 1;
 	amount = abs(amount);
+	amount = amount % striplen;
 	amount = MIN(amount, striplen);
 
 	if (amount > striplen / 2) {
