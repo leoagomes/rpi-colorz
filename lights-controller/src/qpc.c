@@ -31,8 +31,8 @@ void qpc_packet_parse(const uv_buf_t* buf) {
 	channel = MIN(buffer[1], strip_last_channel(&strip));
 
 	switch (op) {
-	case PROTO_BUFFER_START_SET: // buffer start set: [op: 0][short: length][uint8_t*: ...]
-		length = *((uint16_t*)&(buffer[2])); // get given length
+	case PROTO_BUFFER_START_SET: // buffer start set: [op: 0][channel][short: length][uint8_t*: ...]
+		length = as_ushort(&(buffer[2])); // get given length
 		length = MIN(length, buf->len - 4); // get copy data length
 
 		strip_buffer_start_set(&strip, channel, (ws2811_led_t*)(&(buffer[4])),
@@ -40,8 +40,9 @@ void qpc_packet_parse(const uv_buf_t* buf) {
 		strip_renderNPM(strip);
 		break;
 	case PROTO_BUFFER_SPLICE: // buffer splice: [op: 1][short: start][short: end][uint8_t*: data]
-		start = *((uint16_t*)&(buffer[2]));
-		end = *((uint16_t*)&(buffer[4]));
+		start = as_ushort(&(buffer[2]));
+		end = as_ushort(&(buffer[4]));
+
 		length = end - start; // given length
 		length = MIN(buf->len - 6, length); // limited to data length
 
