@@ -56,7 +56,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 
 	switch (op) {
 	case PROTO_BUFFER_START_SET: // buffer start set: [op][channel][short: length][uint8_t*: ...]
-		length = ntohs(*((uint16_t*)&(buffer[2]))); // get given length
+		length = ntohs(as_ushort(&(buffer[2]))); // get given length
 		length = MIN(length, buf->len - 4); // get copy data length
 
 		strip_buffer_start_set(&strip, channel, (ws2811_led_t*)(&(buffer[4])),
@@ -65,8 +65,9 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		break;
 
 	case PROTO_BUFFER_SPLICE: // buffer splice: [op][channel][short: start][short: end][uint8_t*: data]
-		start = ntohs(*((uint16_t*)&(buffer[2])));
-		end = ntohs(*((uint16_t*)&(buffer[4])));
+		start = ntohs(as_ushort(&(buffer[2])));
+		end = ntohs(as_ushort(&(buffer[4])));
+
 		length = end - start; // given length
 		length = MIN(buf->len - 6, length); // limited to data length
 
@@ -76,8 +77,8 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		break;
 
 	case PROTO_BUFFER_INSERT: // buffer insert: [op][channel][ushort: start][ushort: len][data...]
-		start = ntohs(*((uint16_t*)&(buffer[2])));
-		length = ntohs(*((uint16_t*)&(buffer[4])));
+		start = ntohs(as_ushort(&(buffer[2])));
+		length = ntohs(as_ushort(&(buffer[4])));
 
 		strip_buffer_insert(&strip, channel, (ws2811_led_t*)(&(buffer[6])),
 			MIN(length, buf->len), start);
@@ -85,15 +86,17 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		break;
 
 	case PROTO_BUFFER_ROTATE: // buffer rotate: [op][channel][short: amount]
-		length = ntohs(*((uint16_t*)&(buffer[2])));
-		amount = *(int16_t*)&length;
+		length = ntohs(as_ushort(&(buffer[2])));
+		amount = as_short(&length);
+
 		strip_buffer_rotate(&strip, channel, amount);
 		break;
 
 	case PROTO_BUFFER_SHIFT: // buffer shift: [op][channel][short: amount][led: in]
-		length = ntohs(*((uint16_t*)&(buffer[2])));
-		amount = *(int16_t*)&length;
-		in = *(ws2811_led_t*)&(buffer[4]);
+		length = ntohs(as_ushort(&(buffer[2])));
+		amount = as_short(&length);
+
+		in = as(ws2811_led_t, &(buffer[4]));
 		strip_buffer_shift(&strip, channel, amount, in);
 		break;
 
