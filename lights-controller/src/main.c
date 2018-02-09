@@ -26,12 +26,23 @@ int main(int argc, char* argv[]) {
 	// parse command parameters
 	parse_parameters(argc, argv);
 
+	if (VERBOSE)
+		printf("initializing strip...\n");
 	// initialize the strip
-	ws2811_init(&(strip.strip));
+	strip_init(&strip);
 
+	if (VERBOSE)
+		printf("initializing QPC...\n");
 	// initialize Quick Pixel Control handlers
 	qpc_init();
 
+	if (VERBOSE)
+		printf("initializing XPC...\n");
+	// initialize Xtended Pixel Control handlers
+	xpc_init();
+
+	if (VERBOSE)
+		printf("running event loop\n");
 	// run the event loop
 	uv_run(loop, UV_RUN_DEFAULT);
 

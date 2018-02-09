@@ -59,7 +59,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		length = ntohs(as_ushort(&(buffer[2]))); // get given length
 		length = MIN(length, buf->len - 4); // get copy data length
 
-		strip_buffer_start_set(&strip, channel, (ws2811_led_t*)(&(buffer[4])),
+		strip_buffer_start_set(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[4]))),
 			length);
 		strip_renderNPM(strip);
 		break;
@@ -71,7 +71,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		length = end - start; // given length
 		length = MIN(buf->len - 6, length); // limited to data length
 
-		strip_buffer_sub_set(&strip, channel, (ws2811_led_t*)(&(buffer[6])),
+		strip_buffer_sub_set(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[6]))),
 			length, start, end);
 		strip_renderNPM(strip);
 		break;
@@ -80,7 +80,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		start = ntohs(as_ushort(&(buffer[2])));
 		length = ntohs(as_ushort(&(buffer[4])));
 
-		strip_buffer_insert(&strip, channel, (ws2811_led_t*)(&(buffer[6])),
+		strip_buffer_insert(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[6]))),
 			MIN(length, buf->len), start);
 		strip_renderNPM(strip);
 		break;
@@ -90,14 +90,16 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		amount = as_short(&length);
 
 		strip_buffer_rotate(&strip, channel, amount);
+		strip_renderNPM(strip);
 		break;
 
 	case PROTO_BUFFER_SHIFT: // buffer shift: [op][channel][short: amount][led: in]
 		length = ntohs(as_ushort(&(buffer[2])));
 		amount = as_short(&length);
+		in = (ws2811_led_t)ntohl(as_uint(&(buffer[4])));
 
-		in = as(ws2811_led_t, &(buffer[4]));
 		strip_buffer_shift(&strip, channel, amount, in);
+		strip_renderNPM(strip);
 		break;
 
 	case PROTO_BUFFER_READ: // buffer read: [op][channel]
@@ -110,6 +112,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		req->buf = uv_buf_init((char*)strip.strip.channel[channel].leds,
 			length * sizeof(ws2811_led_t));
 		uv_write((uv_write_t*)req, stream, &req->buf, 1, xpc_write_cb);
+		break;
 
 	case PROTO_STRIP_GET_COUNT: // get strip count: [op][channel]
 		// writes back: [ushort: count]
@@ -127,8 +130,14 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		strip_resize(&strip, channel, length);
 		break;
 
+	case PROTO_STRIP_CHANGE_STATE: // change strip state: [op][channel][byte: state (0 = off)]
+		strip_state_set(&strip, channel, (buffer[3] ? 1 : 0));
+		strip_renderNPM(strip);
+		break;
+
 	case PROTO_VENDOR_SPECIFIC: // vendor specific
 		break;
+
 	default:
 		fprintf(stderr, "Request for undefined op\n");
 		break;

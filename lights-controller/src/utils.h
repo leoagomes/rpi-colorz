@@ -25,3 +25,5 @@
 #define v_as_char(p)    v_as(char, p)
 
 void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
+
+ws2811_led_t* ntoh_buffer(ws2811_led_t* buffer, size_t len);

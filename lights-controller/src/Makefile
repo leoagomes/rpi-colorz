@@ -3,7 +3,7 @@ SOURCES=qpc.c strip.c utils.c xpc.c
 INCLUDE_FLAGS=-I$(WS281X_DIR)
 CFLAGS=$(INCLUDE_FLAGS) `pkg-config --cflags libuv`
 
-LFLAGS=`pkg-config --libs libuv`
+LFLAGS=`pkg-config --libs libuv` -L$(WS281X_DIR) -lws2811
 
 CC ?= gcc
 
