@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <uv.h>
 
+#include "ws2811.h"
+
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 

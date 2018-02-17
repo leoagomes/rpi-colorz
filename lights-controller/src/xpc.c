@@ -59,7 +59,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		length = ntohs(as_ushort(&(buffer[2]))); // get given length
 		length = MIN(length, buf->len - 4); // get copy data length
 
-		strip_buffer_start_set(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[4]))),
+		strip_buffer_start_set(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[4])), length),
 			length);
 		strip_renderNPM(strip);
 		break;
@@ -71,7 +71,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		length = end - start; // given length
 		length = MIN(buf->len - 6, length); // limited to data length
 
-		strip_buffer_sub_set(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[6]))),
+		strip_buffer_sub_set(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[6])), length),
 			length, start, end);
 		strip_renderNPM(strip);
 		break;
@@ -80,7 +80,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		start = ntohs(as_ushort(&(buffer[2])));
 		length = ntohs(as_ushort(&(buffer[4])));
 
-		strip_buffer_insert(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[6]))),
+		strip_buffer_insert(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[6])), length),
 			MIN(length, buf->len), start);
 		strip_renderNPM(strip);
 		break;
@@ -131,7 +131,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		break;
 
 	case PROTO_STRIP_CHANGE_STATE: // change strip state: [op][channel][byte: state (0 = off)]
-		strip_state_set(&strip, channel, (buffer[3] ? 1 : 0));
+		strip_state_set(&strip, channel, (buffer[2] ? 1 : 0));
 		strip_renderNPM(strip);
 		break;
 

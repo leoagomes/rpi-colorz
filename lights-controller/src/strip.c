@@ -171,11 +171,11 @@ void strip_buffer_shift(strip_t* strip, int channel, int amount,
 	}
 
 	if (direction > 0) { // shift right
-		memcpy(&(buf[amount]), buf, (striplen - amount) * sizeof(ws2811_led_t));
+		memmove(&(buf[amount]), buf, (striplen - amount) * sizeof(ws2811_led_t));
 		bstart = buf;
 		bend = &(buf[amount]);
 	} else { // shift left
-		memcpy(buf, &(buf[amount]), (striplen - amount) * sizeof(ws2811_led_t));
+		memmove(buf, &(buf[amount]), (striplen - amount) * sizeof(ws2811_led_t));
 		bstart = &(buf[striplen - amount]);
 		bend = &(buf[striplen]);
 	}
