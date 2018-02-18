@@ -68,7 +68,7 @@ void strip_buffer_start_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 	length = MIN(blen, strip_channel_count(strip, channel));
 
 	// memcpy it
-	memcpy(buf, buffer, length);
+	memcpy(buf, buffer, length * sizeof(ws2811_led_t));
 }
 
 void strip_buffer_sub_set(strip_t* strip, int channel, ws2811_led_t* buffer,
@@ -87,7 +87,7 @@ void strip_buffer_sub_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 	if (length < 0)
 		return;
 
-	memcpy(&(buf[start]), buffer, length);
+	memcpy(&(buf[start]), buffer, length * sizeof(ws2811_led_t));
 }
 
 void strip_buffer_insert(strip_t* strip, int channel, ws2811_led_t* buffer,
