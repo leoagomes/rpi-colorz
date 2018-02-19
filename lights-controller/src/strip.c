@@ -184,6 +184,17 @@ void strip_buffer_shift(strip_t* strip, int channel, int amount,
 		*it = insert;
 }
 
+void strip_buffer_fill(strip_t* strip, int channel, ws2811_led_t insert) {
+	int striplen, i;
+	ws2811_led_t* buf;
+
+	buf = strip_crightbuf(strip, channel);
+	striplen = strip_channel_count(strip, channel);
+
+	for (i = 0; i < striplen; i++)
+		buf[i] = insert;
+}
+
 void strip_render(strip_t* strip) {
 	ws2811_render(&(strip->strip));
 }

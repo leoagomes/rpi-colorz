@@ -102,6 +102,14 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		strip_renderNPM(strip);
 		break;
 
+	case PROTO_BUFFER_FILL: // buffer fill: [op][channel][led: in]
+		in = (ws2811_led_t)ntohl(as_uint(&(buffer[2])));
+		
+		strip_buffer_fill(&strip, channel, in);
+		strip_renderNPM(strip);
+		break;
+
+
 	case PROTO_BUFFER_READ: // buffer read: [op][channel]
 		// writes back: [ws2811_led_t* buffer]
 		length = strip_channel_count(&strip, channel);
