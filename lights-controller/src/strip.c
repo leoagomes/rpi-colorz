@@ -195,6 +195,16 @@ void strip_buffer_fill(strip_t* strip, int channel, ws2811_led_t insert) {
 		buf[i] = insert;
 }
 
+void strip_buffer_set_index(strip_t* strip, int channel, uint16_t index, ws2811_led_t in) {
+	ws2811_led_t* buf;
+
+	buf = strip_crightbuf(strip, channel);
+
+	index = MIN(index, strip_channel_count(strip, channel) - 1);
+
+	buf[index] = in;
+}
+
 void strip_render(strip_t* strip) {
 	ws2811_render(&(strip->strip));
 }

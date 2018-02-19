@@ -109,6 +109,13 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		strip_renderNPM(strip);
 		break;
 
+	case PROTO_BUFFER_SETINDEX: // buffer set index: [op][channel][short: index][led: in]
+		length = ntohs(as_ushort(&(buffer[2])));
+		in = (ws2811_led_t)ntohl(as_uint(&(buffer[4])));
+		
+		length = MIN(length, strip_channel_count(&strip, channel));
+		strip_buffer_set_index(&strip, channel, in);
+		break;
 
 	case PROTO_BUFFER_READ: // buffer read: [op][channel]
 		// writes back: [ws2811_led_t* buffer]

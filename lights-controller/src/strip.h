@@ -51,6 +51,7 @@ void strip_buffer_rotate(strip_t* strip, int channel, int amount);
 void strip_buffer_shift(strip_t* strip, int channel, int amount,
 	ws2811_led_t insert);
 void strip_buffer_fill(strip_t* strip, int channel, ws2811_led_t insert);
+void strip_buffer_set_index(strip_t* strip, int channel, ws2811_led_t in);
 
 void strip_render(strip_t* strip);
 
