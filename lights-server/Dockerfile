@@ -2,10 +2,10 @@ FROM alpine
 
 # default directory values
 ARG WS281X_DIR=/root/rpi_ws281x
-ARG CONTROLLER_DIR=/root/lights-controller
+ARG SERVER_DIR=/root/lights-server
 
 # copy the server files to the image
-COPY src/* $CONTROLLER_DIR/
+COPY src/* $SERVER_DIR/
 
 # the default extended pixel control port
 EXPOSE 7890
@@ -24,10 +24,10 @@ RUN git clone https://github.com/leoagomes/rpi_ws281x.git $WS281X_DIR && \
     scons
 
 # build the server
-RUN cd $CONTROLLER_DIR && \
+RUN cd $SERVER_DIR && \
     export WS281X_DIR=$WS281X_DIR && \
     make
 
 # Set command to server execution
-CMD cd $CONTROLLER_DIR && \
+CMD cd $SERVER_DIR && \
     make run
