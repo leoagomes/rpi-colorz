@@ -9,6 +9,7 @@ COPY src/* $SERVER_DIR/
 
 # the default extended pixel control port
 EXPOSE 7890
+EXPOSE 7891
 
 # update and upgrade
 RUN apk update && apk upgrade
