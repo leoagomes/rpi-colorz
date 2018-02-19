@@ -114,7 +114,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		in = (ws2811_led_t)ntohl(as_uint(&(buffer[4])));
 		
 		length = MIN(length, strip_channel_count(&strip, channel));
-		strip_buffer_set_index(&strip, channel, in);
+		strip_buffer_set_index(&strip, channel, length, in);
 		break;
 
 	case PROTO_BUFFER_READ: // buffer read: [op][channel]
