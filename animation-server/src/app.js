@@ -1,8 +1,19 @@
 const express = require('express');
-const env = require('./env');
-
 const app = express();
+let bodyParser = require('body-parser');
 
-app.get('/env', (req, res) => res.send(env));
+env = require('./env');
+
+animation = require('./core/animation');
+strip = require('./core/strip');
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+let animationsRoute = require('./routes/animations');
+let environmentRoute = require('./routes/environment');
+
+app.use('/animations', animationsRoute);
+app.use('/env', environmentRoute);
 
 app.listen(3000, () => console.log('started server'));
