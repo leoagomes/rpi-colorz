@@ -28,4 +28,5 @@
 
 void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 
-ws2811_led_t* ntoh_buffer(ws2811_led_t* buffer, size_t len);
+ws2811_led_t* inline_ntoh_buffer(ws2811_led_t* buffer, size_t len);
+ws2811_led_t* hton_buffer(ws2811_led_t* buffer, size_t len);

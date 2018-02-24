@@ -18,6 +18,20 @@ extern uv_loop_t* loop; // defined in main.c
 int XPC_PORT = DEFAULT_XPC_PORT;
 uv_tcp_t xpc;
 
+/*
+ * tmpbuf is a temporary buffer with fized size
+ * it is used when sending relatively small data through packets in order to
+ * prevent malloc'ing and freeing constantly 1~8 byte buffers
+ */
+#define TEMPBUF_SIZE 50
+char tmpbuf[TEMPBUF_SIZE];
+
+/*
+ * copies a stack variable to the tmpbuf
+ * the value should be converted to network order prior to using the macro
+ */
+#define scopy_to_tmpbuf(v) memcpy(tmpbuf, &(v), sizeof(v));
+
 struct write_req_t {
 	uv_write_t req;
 	uv_buf_t buf;
@@ -31,7 +45,9 @@ void xpc_write_cb(uv_write_t* req, int status) {
 
 	wr = (struct write_req_t*)req;
 
-	free(wr->buf.base);
+	if (wr->buf.base != tmpbuf)
+		free(wr->buf.base);
+
 	free(wr);
 }
 
@@ -40,7 +56,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 	uint8_t op, channel;
 	uint16_t length, start, end;
 	int16_t amount;
-	struct write_req_t* req;
+	struct write_req_t* request;
 	ws2811_led_t in;
 
 	buffer = (uint8_t*)buf->base;
@@ -59,8 +75,8 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		length = ntohs(as_ushort(&(buffer[2]))); // get given length
 		length = MIN(length, buf->len - 4); // get copy data length
 
-		strip_buffer_start_set(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[4])), length),
-			length);
+		strip_buffer_start_set(&strip, channel,
+			inline_ntoh_buffer((ws2811_led_t*)(&(buffer[4])), length), length);
 		strip_renderNPM(strip);
 		break;
 
@@ -71,8 +87,9 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		length = end - start; // given length
 		length = MIN(buf->len - 6, length); // limited to data length
 
-		strip_buffer_sub_set(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[6])), length),
-			length, start, end);
+		strip_buffer_sub_set(&strip, channel,
+			inline_ntoh_buffer((ws2811_led_t*)(&(buffer[6])), length), length,
+			start, end);
 		strip_renderNPM(strip);
 		break;
 
@@ -80,7 +97,8 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		start = ntohs(as_ushort(&(buffer[2])));
 		length = ntohs(as_ushort(&(buffer[4])));
 
-		strip_buffer_insert(&strip, channel, ntoh_buffer((ws2811_led_t*)(&(buffer[6])), length),
+		strip_buffer_insert(&strip, channel,
+			inline_ntoh_buffer((ws2811_led_t*)(&(buffer[6])), length),
 			MIN(length, buf->len), start);
 		strip_renderNPM(strip);
 		break;
@@ -121,28 +139,40 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		// writes back: [ws2811_led_t* buffer]
 		length = strip_channel_count(&strip, channel);
 
-		req = (struct write_req_t*)malloc(sizeof(*req));
-		__bad_malloc_error(req);
+		request = (struct write_req_t*)malloc(sizeof(struct write_req_t*));
+		__bad_malloc_error(request);
 
-		req->buf = uv_buf_init((char*)strip.strip.channel[channel].leds,
-			length * sizeof(ws2811_led_t));
-		uv_write((uv_write_t*)req, stream, &req->buf, 1, xpc_write_cb);
+		request->buf = uv_buf_init(
+			(char*)hton_buffer(strip_crightbuf(&strip, channel), length),
+			length * sizeof(ws2811_led_t)); 
+		uv_write((uv_write_t*)request, stream, &(request->buf), 1, xpc_write_cb);
 		break;
 
 	case PROTO_STRIP_GET_COUNT: // get strip count: [op][channel]
 		// writes back: [ushort: count]
 		length = htons(strip_channel_count(&strip, channel));
 
-		req = (struct write_req_t*)malloc(sizeof(*req));
-		__bad_malloc_error(req);
+		request = (struct write_req_t*)malloc(sizeof(struct write_req_t));
+		__bad_malloc_error(request);
 
-		req->buf = uv_buf_init((char*)&length, sizeof(uint16_t));
-		uv_write(req, stream, &(req->buf), 1, xpc_write_cb);
+		scopy_to_tmpbuf(length);
+		request->buf = uv_buf_init(tmpbuf, sizeof(length));
+		uv_write((uv_write_t*)request, stream, &(request->buf), 1, xpc_write_cb);
 		break;
 
 	case PROTO_STRIP_CHANGE_COUNT: // change strip length: [op][channel][ushort: length]
 		length = ntohs(*((uint16_t*)(&(buffer[2]))));
 		strip_resize(&strip, channel, length);
+		break;
+
+	case PROTO_STRIP_GET_STATE: // get strip state: [op][channel]
+		request = (struct write_req_t*)malloc(sizeof(struct write_req_t));
+		__bad_malloc_error(request);
+
+		op = (strip.state[channel] == 0) ? 0 : 1;
+		scopy_to_tmpbuf(op);
+		request->buf = uv_buf_init(tmpbuf, sizeof(op));
+		uv_write((uv_write_t*)request, stream, &(request->buf), 1, xpc_write_cb);
 		break;
 
 	case PROTO_STRIP_CHANGE_STATE: // change strip state: [op][channel][byte: state (0 = off)]
