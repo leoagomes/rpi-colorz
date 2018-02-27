@@ -139,7 +139,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		// writes back: [ws2811_led_t* buffer]
 		length = strip_channel_count(&strip, channel);
 
-		request = (struct write_req_t*)malloc(sizeof(struct write_req_t*));
+		request = (struct write_req_t*)malloc(sizeof(struct write_req_t));
 		__bad_malloc_error(request);
 
 		request->buf = uv_buf_init(
@@ -178,6 +178,16 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 	case PROTO_STRIP_CHANGE_STATE: // change strip state: [op][channel][byte: state (0 = off)]
 		strip_state_set(&strip, channel, (buffer[2] ? 1 : 0));
 		strip_renderNPM(strip);
+		break;
+
+	case PROTO_DEVICE_GET_STRIP_COUNT:
+		request = (struct write_req_t*)malloc(sizeof(struct write_req_t));
+		__bad_malloc_error(request);
+
+		channel = htons(MAX_SUPPORTED_STRIPS);
+		scopy_to_tmpbuf(channel);
+		request->buf = uv_buf_init(tmpbuf, sizeof(channel));
+		uv_write((uv_write_t*)request, stream, &(request->buf), 1, xpc_write_cb);
 		break;
 
 	case PROTO_VENDOR_SPECIFIC: // vendor specific

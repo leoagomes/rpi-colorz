@@ -11,6 +11,8 @@
 #define DEFAULT_INVERT 0
 #define DEFAULT_BRIGHTNESS 255
 
+#define MAX_SUPPORTED_STRIPS RPI_PWM_CHANNELS
+
 typedef struct strip_t strip_t;
 
 enum strip_state_t {
@@ -20,8 +22,8 @@ enum strip_state_t {
 
 struct strip_t {
 	ws2811_t strip;
-	ws2811_led_t* alt_buf[RPI_PWM_CHANNELS];
-	int state[RPI_PWM_CHANNELS];
+	ws2811_led_t* alt_buf[MAX_SUPPORTED_STRIPS];
+	int state[MAX_SUPPORTED_STRIPS];
 };
 
 #define strip_inner_param(s,p) (s)->strip.(p)
