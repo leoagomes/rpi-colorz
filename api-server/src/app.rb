@@ -1,18 +1,25 @@
 require 'json'
 require 'sinatra'
-require 'sinatra/reloader' if development?
-require './device'
 
-device = Device.new
+require './modules/device_client'
 
-get '/device' do
-  device.to_json
-end
+require './routes/animations_api'
+require './routes/strip_api'
 
-post '/device/turn' do
-  device.state = 'on'
-end
+DEFAULT_STRIP_INDEX = 0
 
-get '/' do
-  'Hello'
+$device = DeviceClient.new ENV['XPC_DEVICE_ADDRESS'], ENV['XPC_DEVICE_PORT']
+$device.connect
+
+class ApiServer < Sinatra::Base
+  use AnimationsApi
+  use StripApi
+
+  not_found do
+    json :error => 'Not found', :status => response.status
+  end
+
+  error Sinatra::BadRequest do
+    json :error => 'Bad Request', :status => response.status
+  end
 end

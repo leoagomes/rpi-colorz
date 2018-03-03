@@ -1,11 +1,16 @@
 FROM ruby:2.5-alpine
 
+ARG API_SERVER_DIR=/root/api-server
+
+ENV XPC_DEVICE_ADDRESS=lights-server
+ENV XPC_DEVICE_PORT=7890
+
 # copy files to the image
-COPY src/* /root/api-server
+COPY src/* $API_SERVER_DIR
 
 # install needed gems
-RUN gem install bundler && \
-    cd /root/api-server && \
+RUN gem install bundler rack thin && \
+    cd $API_SERVER_DIR && \
     bundle install
 
-CMD cd /root/api-server && ruby app.rb
+CMD cd $API_SERVER_DIR && rackup

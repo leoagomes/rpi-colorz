@@ -1,6 +1,12 @@
 require 'rubygems'
 require 'bundler'
+require 'rack/protection'
+
 require './app'
 Bundler.require
 
-run Sinatra::Application
+use Rack::Protection::PathTraversal
+
+# TODO: use David
+
+run ApiServer
