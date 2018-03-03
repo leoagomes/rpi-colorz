@@ -184,7 +184,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		request = (struct write_req_t*)malloc(sizeof(struct write_req_t));
 		__bad_malloc_error(request);
 
-		channel = htons(MAX_SUPPORTED_STRIPS);
+		channel = MAX_SUPPORTED_STRIPS;
 		scopy_to_tmpbuf(channel);
 		request->buf = uv_buf_init(tmpbuf, sizeof(channel));
 		uv_write((uv_write_t*)request, stream, &(request->buf), 1, xpc_write_cb);
