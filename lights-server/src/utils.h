@@ -1,3 +1,9 @@
+/**
+ * @brief Utility functions and macros.
+ * 
+ * @file utils.h
+ * @author Leonardo G.
+ */
 #pragma once
 
 #include <stdint.h>

@@ -1,3 +1,9 @@
+/**
+ * @brief Strip operating function prototypes.
+ * 
+ * @file strip.h
+ * @author Leonardo G.
+ */
 #pragma once
 
 #include <stdint.h>
@@ -17,13 +23,13 @@ typedef struct strip_t strip_t;
 
 enum strip_state_t {
 	STRIP_OFF,
-	STRIP_ON,
+	STRIP_ON, // Here ON is 1, but to the functions ON is just not zero.
 };
 
 struct strip_t {
-	ws2811_t strip;
-	ws2811_led_t* alt_buf[MAX_SUPPORTED_STRIPS];
-	int state[MAX_SUPPORTED_STRIPS];
+	ws2811_t strip; /*!< The rpi_ws2811 strip */
+	ws2811_led_t* alt_buf[MAX_SUPPORTED_STRIPS]; /*!< Stores on/off buffers */
+	int state[MAX_SUPPORTED_STRIPS]; /*!< The state of each channel (on/off) */
 };
 
 #define strip_inner_param(s,p) (s)->strip.(p)

@@ -1,3 +1,8 @@
+/**
+ * @brief Protocol constant definition file.
+ * 
+ * @author Leonardo G.
+ */
 #pragma once
 
 enum {

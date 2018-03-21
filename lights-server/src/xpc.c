@@ -1,3 +1,10 @@
+/**
+ * @brief XPC implementation.
+ * 
+ * @file xpc.c
+ * @author your name
+ * @date 2018-03-21
+ */
 #include "xpc.h"
 
 #include "utils.h"
@@ -37,12 +44,15 @@ struct write_req_t {
 	uv_buf_t buf;
 };
 
+/*
+ * A callback for LibUV.
+ */
 void xpc_write_cb(uv_write_t* req, int status) {
 	struct write_req_t* wr;
 
 	if (status)
 		fprintf(stderr, "Write error: %s.\n", uv_strerror(status));
-
+}
 	wr = (struct write_req_t*)req;
 
 	if (wr->buf.base != tmpbuf)
@@ -51,6 +61,12 @@ void xpc_write_cb(uv_write_t* req, int status) {
 	free(wr);
 }
 
+/**
+ * @brief Parses a received chunk.
+ * 
+ * @param stream The libUV stream.
+ * @param buf The buffer containing the data.
+ */
 void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 	uint8_t* buffer;
 	uint8_t op, channel;
@@ -199,6 +215,9 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 	}
 }
 
+/*
+ * A libUV callback.
+ */
 void on_xpc_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 	uv_buf_t parsebuf;
 
@@ -214,6 +233,9 @@ void on_xpc_read(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 	}
 }
 
+/*
+ * A libUV callback for handling connections.
+ */
 void on_xpc_connection(uv_stream_t* connection, int status) {
 	int r;
 	uv_stream_t* client;
@@ -238,15 +260,19 @@ void on_xpc_connection(uv_stream_t* connection, int status) {
 	}
 }
 
+/**
+ * @brief Initializes callbacks and needed data for XPC.
+ */
 void xpc_init() {
 	struct sockaddr_in addr;
 	int r;
 
+	// Creates a TCP server that listens on every interface at the xpc port
 	uv_tcp_init(loop, &xpc);
 	uv_ip4_addr("0.0.0.0", XPC_PORT, &addr);
-
 	uv_tcp_bind(&xpc, &addr, 0);
 
+	// abort in case there was an error
 	if ((r = uv_listen((uv_stream_t*)&xpc, 10, on_xpc_connection))) {
 		fprintf(stderr, "Error listening to XPC connections: %s.\n",
 			uv_strerror(r));

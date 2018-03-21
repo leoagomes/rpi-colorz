@@ -1,3 +1,9 @@
+/**
+ * @brief QPC implementation file.
+ * 
+ * @file qpc.c
+ * @author Leonardo G.
+ */
 #include "qpc.h"
 
 #include "utils.h"
@@ -11,13 +17,20 @@
 
 // TODO: improve error handling
 
-extern int QPC_PORT;
 extern strip_t strip;
 extern uv_loop_t* loop;
 
-int QPC_PORT = DEFAULT_QPC_PORT;
-uv_udp_t qpc;
+int QPC_PORT = DEFAULT_QPC_PORT; //!< The Port QPC should listen on
+uv_udp_t qpc; //!< The global QPC UDP LibUV handle
 
+/**
+ * @brief Parses a packet sent to the QPC port.
+ * 
+ * This function parses and executes packets sent according to QPC definitions
+ * (which follow somewhat closely the XPC definitions).
+ * 
+ * @param buf The buffer which contains the packet's data.
+ */
 void qpc_packet_parse(const uv_buf_t* buf) {
 	uint8_t* buffer;
 	uint8_t op, channel;
@@ -30,6 +43,7 @@ void qpc_packet_parse(const uv_buf_t* buf) {
 	op = buffer[0];
 	channel = MIN(buffer[1], strip_last_channel(&strip));
 
+	// TODO: implement other operations
 	switch (op) {
 	case PROTO_BUFFER_START_SET: // buffer start set: [op: 0][channel][short: length][uint8_t*: ...]
 		length = as_ushort(&(buffer[2])); // get given length
@@ -58,6 +72,9 @@ void qpc_packet_parse(const uv_buf_t* buf) {
 	}
 }
 
+/*
+ * Handler callback for LibUV's recv.
+ */
 void on_qpc_read(uv_udp_t* req, ssize_t nread, const uv_buf_t* buf,
 	const struct sockaddr* addr, unsigned flags) {
 
@@ -77,9 +94,11 @@ void on_qpc_read(uv_udp_t* req, ssize_t nread, const uv_buf_t* buf,
 	free(buf->base);
 }
 
+/**
+ * @brief Initializes QPC callbacks.
+ */
 void qpc_init() {
 	struct sockaddr_in recv_address;
-
 	uv_udp_init(loop, &qpc);
 	uv_ip4_addr("0.0.0.0", QPC_PORT, &recv_address);
 	uv_udp_bind(&qpc, (struct sockaddr*)&recv_address, 0);

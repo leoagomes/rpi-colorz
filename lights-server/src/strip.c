@@ -1,3 +1,12 @@
+/**
+ * @brief Strip operation implementations.
+ * 
+ * It is important to note that the functions in this file may not check the
+ * validity of the parameters passed, so be careful using them.
+ * 
+ * @file strip.c
+ * @author Leonardo G.
+ */
 #include "strip.h"
 
 #include "utils.h"
@@ -7,7 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-strip_t strip = {
+strip_t strip = { //!< The global strip structure
 	.strip = {
 		.freq = DEFAULT_FREQ,
 		.dmanum = DEFAULT_DMA,
@@ -34,6 +43,13 @@ strip_t strip = {
 	}
 };
 
+/**
+ * @brief Sets a strip's state (on/off).
+ * 
+ * @param strip The strip operand.
+ * @param channel The effective channel index.
+ * @param state The state to set. OFF = 0, ON = !0
+ */
 void strip_state_set(strip_t* strip, int channel, int state) {
 	ws2811_led_t* aux;
 
@@ -52,10 +68,27 @@ void strip_state_set(strip_t* strip, int channel, int state) {
 	ws2811_render(&(strip->strip));
 } 
 
+/**
+ * @brief Get a strip's state.
+ * 
+ * @param strip The strip.
+ * @param channel The channel.
+ * @return int The state. (OFF = 0, ON = !0)
+ */
 int strip_state_get(strip_t* strip, int channel) {
 	return strip->state[channel];
 }
 
+/**
+ * @brief Sets the strip's data from the start up to a len.
+ * 
+ * Sets the LEDs from 0 up until blen to whatever is inside the buffer.
+ * 
+ * @param strip The strip operand.
+ * @param channel The effective channel to set the data.
+ * @param buffer The buffer containing what the strip should contain.
+ * @param blen The length of the buffer.
+ */
 void strip_buffer_start_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 	int blen) {
 	ws2811_led_t* buf;
@@ -71,6 +104,21 @@ void strip_buffer_start_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 	memcpy(buf, buffer, length * sizeof(ws2811_led_t));
 }
 
+/**
+ * @brief Sets a subset of the strip to whatever's in buffer.
+ * 
+ * Sets the contents of the strip from _start_ until _end_ to the contents
+ * of _buffer_. This function will correctly set the boundaries: if a buffer
+ * shorter than _end - start_ is given, then it will set from _start_ until
+ * _start + blen_ to the contents provided in buffer.
+ * 
+ * @param strip The strip operand.
+ * @param channel The effective channel to use.
+ * @param buffer The buffer containing the new values.
+ * @param blen The length of the given buffer.
+ * @param start Starting index.
+ * @param end End index.
+ */
 void strip_buffer_sub_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 	int blen, int start, int end) {
 	ws2811_led_t* buf;
@@ -90,6 +138,20 @@ void strip_buffer_sub_set(strip_t* strip, int channel, ws2811_led_t* buffer,
 	memcpy(&(buf[start]), buffer, length * sizeof(ws2811_led_t));
 }
 
+/**
+ * @brief Inserts into the strips the colors provided in buffer.
+ * 
+ * This function inserts the contents of buffer into the strip, effectively
+ * moving whatever was at the position the buffer was inserted to right after
+ * the buffer's end. Inserting WWW into a 7-colored strip containing ABCDEFG at
+ * index 2 would result in the contents of the strip being ABWWWCD.
+ * 
+ * @param strip The strip operand.
+ * @param channel The effective channel.
+ * @param buffer The buffer containing the data to insert.
+ * @param blen The length of the given buffer.
+ * @param start The index to insert the buffer into.
+ */
 void strip_buffer_insert(strip_t* strip, int channel, ws2811_led_t* buffer,
 	int blen, int start) {
 	int length, striplen;
@@ -106,6 +168,19 @@ void strip_buffer_insert(strip_t* strip, int channel, ws2811_led_t* buffer,
 	memcpy(&(buf[start]), buffer, blen * sizeof(ws2811_led_t));
 }
 
+/**
+ * @brief Rotates a strip's buffer a given amount.
+ * 
+ * Rotates a strip's buffer a given amount at a given direction. If the amount
+ * is positive, the buffer is rotated towards the end. If the amount is negative
+ * then it is rotated towards the beginning. An amount of -3, for example, would
+ * transform the ABCDEFG strip into DEFGABC, while an amount of 3 would
+ * transform the same ABCDEFG strip into EFGABCD.
+ * 
+ * @param strip The strip operand.
+ * @param channel The effective channel to use.
+ * @param amount The amount to rotate. (eg: -3 or 10)
+ */
 void strip_buffer_rotate(strip_t* strip, int channel, int amount) {
 	ws2811_led_t *buf, *tmp;
 	int direction, striplen;
@@ -152,6 +227,20 @@ void strip_buffer_rotate(strip_t* strip, int channel, int amount) {
 	}
 }
 
+/**
+ * @brief Shifts a strip's buffer a given amount.
+ * 
+ * This function shifts a strip's buffer _amount_ LEDs inserting into the void
+ * space the _insert_ color. The shifting direction is provided by the 
+ * _amount_'s sign in a behavior similar to rotate's. Shifting 'A' into the
+ * ABCDEFG strip with the amount of -3 would result into DEFGAAA. The same shift
+ * using 3 as amount would yield AAAABCD.
+ * 
+ * @param strip The strip operand.
+ * @param channel The channel to use.
+ * @param amount The amount to shift.
+ * @param insert The color to insert.
+ */
 void strip_buffer_shift(strip_t* strip, int channel, int amount,
 	ws2811_led_t insert) {
 	ws2811_led_t *buf, *bstart, *bend, *it;
@@ -184,6 +273,13 @@ void strip_buffer_shift(strip_t* strip, int channel, int amount,
 		*it = insert;
 }
 
+/**
+ * @brief Fills a strip's buffer with a given color.
+ * 
+ * @param strip The strip operand.
+ * @param channel The channel to use.
+ * @param insert The color to fill the strip's buffer with.
+ */
 void strip_buffer_fill(strip_t* strip, int channel, ws2811_led_t insert) {
 	int striplen, i;
 	ws2811_led_t* buf;
@@ -195,6 +291,14 @@ void strip_buffer_fill(strip_t* strip, int channel, ws2811_led_t insert) {
 		buf[i] = insert;
 }
 
+/**
+ * @brief Sets the LED at a given index to a given color.
+ * 
+ * @param strip The strip operand.
+ * @param channel The channel to use.
+ * @param index The index of the led to set.
+ * @param in The color to set the led to.
+ */
 void strip_buffer_set_index(strip_t* strip, int channel, uint16_t index, ws2811_led_t in) {
 	ws2811_led_t* buf;
 
@@ -205,10 +309,20 @@ void strip_buffer_set_index(strip_t* strip, int channel, uint16_t index, ws2811_
 	buf[index] = in;
 }
 
+/**
+ * @brief Sends the data to the actual LED strip.
+ * 
+ * @param strip The strip to render.
+ */
 void strip_render(strip_t* strip) {
 	ws2811_render(&(strip->strip));
 }
 
+/**
+ * @brief Initializes a strip "object".
+ * 
+ * @param strip The strip object pointer.
+ */
 void strip_init(strip_t* strip) {
 	int i;
 
@@ -222,6 +336,16 @@ void strip_init(strip_t* strip) {
 	}
 }
 
+/**
+ * @brief Finalizes the strip "object", freeing all memory used by it.
+ * 
+ * Keep in mind that this function does not free the strip_t* passed to it,
+ * as it should have been allocated by whoever called the function and this will
+ * only manage the memory it created. It is also like this so strip "objects"
+ * can live on the stack or in global memory.
+ * 
+ * @param strip The strip "object".
+ */
 void strip_fini(strip_t* strip) {
 	int i;
 
@@ -231,6 +355,14 @@ void strip_fini(strip_t* strip) {
 	ws2811_fini(&(strip->strip));
 }
 
+/**
+ * @brief Resizes a strip's buffer to a given length.
+ * 
+ * @param strip The strip operand.
+ * @param channel The channel to resize.
+ * @param newlen 
+ * @return int 
+ */
 int strip_resize(strip_t* strip, int channel, int newlen) {
 	if (newlen < 0)
 		return 0;

@@ -1,3 +1,9 @@
+/**
+ * @brief The file that contains the main function.
+ * 
+ * @file main.c
+ * @author Leonardo G.
+ */
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,6 +55,11 @@ int main(int argc, char* argv[]) {
 	return 0;
 }
 
+/**
+ * @brief Prints Help information.
+ * 
+ * @param argv0 The value of argv[0].
+ */
 void print_help(char* argv0) {
 	printf("help: %s [options]\n"
 	       "\t--xpc,-x <port>         -- set XPC port (default 7890)\n"
@@ -73,10 +84,24 @@ void print_help(char* argv0) {
 	       "\t  'rgbw' and 'grbw'.\n", argv0);
 }
 
+/**
+ * @brief Prints usage.
+ * 
+ * @param argv0 The value of argv[0].
+ */
 void print_usage(char* argv0) {
 	printf("usage: %s [[-x <port>] [-q <port>] [-v] [-h]]\n", argv0);
 }
 
+/**
+ * @brief Parses the parameters passed by the shell.
+ * 
+ * Parses argv parameters, setting the global variables for those parameters
+ * when necessary.
+ * 
+ * @param argc The argc parameter from main.
+ * @param argv The argv parameter from main.
+ */
 void parse_parameters(int argc, char** argv) {
 	int c, option_index;
 	static struct option long_options[] = {
