@@ -6,10 +6,11 @@ require './modules/device_client'
 require './routes/animations_api'
 require './routes/strip_api'
 
-DEFAULT_STRIP_INDEX = 0
+require './modules/env_loader'
 
-$device = DeviceClient.new ENV['XPC_DEVICE_ADDRESS'], ENV['XPC_DEVICE_PORT']
-$device.connect
+env_defaults 'XPC_DEVICE_ADDRESS' => 'raspberrypi.local',
+             'XPC_DEVICE_PORT' => '7890',
+             'ANIMATION_ROUTER_HOST' => 'tcp://localhost:5555'
 
 class ApiServer < Sinatra::Base
   use AnimationsApi
