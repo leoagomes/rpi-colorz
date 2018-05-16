@@ -1,0 +1,34 @@
+{
+  "id": "base/static",
+  "strings": {
+    "en": {
+      "name": "Static",
+      "description": "Static color mode",
+      "color-label": "Color",
+      "color-description": "Strip color"
+    },
+    "pt-br": {
+      "name": "Estático",
+      "description": "Modo estático",
+      "color-label": "Cor",
+      "color-description": "Cor para a faixa"
+    }
+  },
+
+  "name": "$name",
+  "description": "$description",
+  "author": "Leonardo",
+  "engine": "Lua",
+
+  "params": {
+    "color": {
+      "label":"#color-label",
+      "description": "#color-description",
+      "type": "color",
+      "default": "#FFFFFF",
+      "value": "#FF0000"
+    }
+  },
+
+  "data": {}
+}
