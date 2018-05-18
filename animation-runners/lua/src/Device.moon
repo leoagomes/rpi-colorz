@@ -30,13 +30,13 @@ class Device
 
 	connect: =>
 		if @udp
-			@sock, other = socket.udp()
+			@sock, other = socket.udp!
 			if @sock == nil
 				return false, other
 
 			@sock\setpeername @address, @port
 		else
-			@sock, other = socket.tcp()
+			@sock, other = socket.tcp!
 			if @sock == nil
 				return false, other
 
@@ -57,48 +57,79 @@ class Device
 			return @sock\receive amount
 		return false
 
+	lock: =>
+		locked = {}
+		hidden_self = @
+
+		locked.start_set = (zelf, ...) ->
+			hidden_self\start_set ...
+		locked.replace = (zelf, ...) ->
+			hidden_self\replace ...
+		locked.insert = (zelf, ...) ->
+			hidden_self\insert ...
+		locked.rotate = (zelf, ...) ->
+			hidden_self\rotate ...
+		locked.shift = (zelf, ...) ->
+			hidden_self\shift ...
+		locked.fill = (zelf, ...) ->
+			hidden_self\fill ...
+		locked.set_index = (zelf, ...) ->
+			hidden_self\set_index ...
+		locked.read = (zelf, ...) ->
+			hidden_self\read ...
+		locked.set_length = (zelf, ...) ->
+			hidden_self\set_length ...
+		locked.get_length = (zelf, ...) ->
+			hidden_self\get_length ...
+		locked.set_state = (zelf, ...) ->
+			hidden_self\set_state ...
+		locked.get_state = (zelf, ...) ->
+			hidden_self\get_state ...
+
+		return locked
+
 	start_set: (strip, buffer) =>
-		fmt = '<BBI2' .. string.rep 'I4', #buffer
+		fmt = '>BBI2' .. string.rep 'I4', #buffer
 		data = spack fmt, ops.BUFFER_START_SET, strip, #buffer,
 			unpack buffer
 		@\send data
 
 	replace: (strip, start, buffer) =>
-		fmt = '<BBI2I2' .. string.rep 'I4', #buffer
+		fmt = '>BBI2I2' .. string.rep 'I4', #buffer
 		data = spack fmt, ops.BUFFER_REPLACE, strip, start,
 			#buffer, unpack buffer
 		@\send data
 
 	insert: (strip, start, buffer) =>
-		fmt = '<BBI2I2' .. string.rep 'I4', #buffer
+		fmt = '>BBI2I2' .. string.rep 'I4', #buffer
 		data = spack fmt, ops.BUFFER_INSERT, strip, start,
 			#buffer, unpack buffer
 		@\send data
 
 	rotate: (strip, amount) =>
-		data = spack '<BBi2', ops.BUFFER_ROTATE, strip, amount
+		data = spack '>BBi2', ops.BUFFER_ROTATE, strip, amount
 		@\send data
 
 	shift: (strip, amount, in_color) =>
-		data = spack '<BBi2I4', ops.BUFFER_SHIFT, strip, amount,
+		data = spack '>BBi2I4', ops.BUFFER_SHIFT, strip, amount,
 			in_color
 		@\send data
 
 	fill: (strip, color) =>
-		data = spack '<BBI4', ops.BUFFER_FILL, strip, color
+		data = spack '>BBI4', ops.BUFFER_FILL, strip, color
 		@\send data
 
 	set_index: (strip, index, color) =>
-		data = spack '<BBI2I4', ops.BUFFER_SET_INDEX, strip,
+		data = spack '>BBI2I4', ops.BUFFER_SET_INDEX, strip,
 			index, color
 		@\send data
 
 	read: (strip) =>
-		data = spack '<BB', ops.BUFFER_READ, strip
+		data = spack '>BB', ops.BUFFER_READ, strip
 		@\send data
-		length = sunpack '<I2', @\receive 2
+		length = sunpack '>I2', @\receive 2
 
-		fmt = '<' .. string.rep 'I4', length
+		fmt = '>' .. string.rep 'I4', length
 
 		received_data = @\receive length * 4
 		if received_data == nil
@@ -108,29 +139,29 @@ class Device
 		return rd
 
 	get_length: (strip) =>
-		data = spack '<BB', ops.STRIP_GET_LENGTH, strip
+		data = spack '>BB', ops.STRIP_GET_LENGTH, strip
 		@\send data
 
 		received_data = @\receive 1
 		if received_data == nil
 			return false
 
-		rd = sunpack '<B', received_data
+		rd = sunpack '>B', received_data
 		return rd
 
 	set_length: (strip, length) =>
-		data = spack '<BBI2', ops.STRIP_SET_LENGTH, strip, length
+		data = spack '>BBI2', ops.STRIP_SET_LENGTH, strip, length
 		@\send data
 
 	get_state: (strip) =>
-		data = spack '<BB', ops.STRIP_GET_STATE, strip
+		data = spack '>BB', ops.STRIP_GET_STATE, strip
 		@\send data
 		received_data = @\receive 1
 		if received_data == nil
 			return false
-		rd = sunpack '<B', received_data
+		rd = sunpack '>B', received_data
 		return rd
 
 	set_state: (strip, state) =>
-		data = spack '<BBB', ops.STRIP_SET_STATE, strip, state == 'on'
+		data = spack '>BBB', ops.STRIP_SET_STATE, strip, state == 'on'
 		@\send data

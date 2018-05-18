@@ -31,18 +31,33 @@ class Scripter
 
 		setfenv @chunk, @environment
 
-		@update, err = pcall @chunk
+		rt, err = pcall @chunk
 
-		if @update == nil
+		if rt == nil or rt == false
 			return false, error
+
+		switch type err
+			when 'table'
+				@update = err.update
+				@update_params = err.update_params
+			when 'function'
+				@update = err
+				@update_params = nil
+			else
+				return false, "wrong type for data execution return #{err}"
 
 		return true
 
 	has_update: =>
 		return @update != nil
 
+	set_env: (key, val) =>
+		@environment[key] = val
+
 	update: (...) =>
 		if @update != nil
 			return pcall @update, ...
 
 		return false
+
+	update_params: (...) =>
