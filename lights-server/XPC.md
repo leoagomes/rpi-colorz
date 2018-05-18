@@ -1,5 +1,10 @@
 # Extended Pixel Control
 
+**NOTE: this is currently undergoing refactoring.** I don't intend on changing
+the functionality described in this file, but I do plan on changing some of the
+names of some of the operations (like 'splicing'). If you feel like you could
+contribute to any of this, please send a PR.
+
 XPC is based on OPC, and xtends its operations by adding splicing, shifting,
 rotating, etc. There is also the QPC, which is a Quicker alternative to XPC,
 relying on UDP for quick remote-control-like actions that require no reply.
@@ -72,12 +77,12 @@ Sets the `length` first leds to what's in `buffer`.
 
 #### `splice`
 
-Substitutes led colours index `start` through `start + length` by the ones in
+Substitutes led colors index `start` through `start + length` by the ones in
 `buffer`.
 
 #### `insert`
 
-Inserts `length` colours from `buffer` at index `start`, shifting everything
+Inserts `length` colors from `buffer` at index `start`, shifting everything
 that originally was from `start` to `start + length`.
 
 #### `rotate`

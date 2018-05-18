@@ -52,7 +52,7 @@ void xpc_write_cb(uv_write_t* req, int status) {
 
 	if (status)
 		fprintf(stderr, "Write error: %s.\n", uv_strerror(status));
-}
+
 	wr = (struct write_req_t*)req;
 
 	if (wr->buf.base != tmpbuf)
@@ -81,6 +81,18 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 
 	op = buffer[0];
 	channel = MIN(buffer[1], strip_last_channel(&strip));
+
+	// if the op is on every channel and not a non-channel op
+	if (buffer[1] == 0xFF && op != 0xFE) {
+		// run the op for each channel
+		uint8_t i;
+
+		for (i = 0; i <= strip_last_channel(&strip); i++) {
+			buffer[1] = i;
+			xpc_packet_parse(stream, buf);
+		}
+		return;
+	}
 
 #define __bad_malloc_error(p) if(!(p)) { \
 		fprintf(stderr, "Error malloc'ing response.\n"); \
@@ -158,9 +170,16 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		request = (struct write_req_t*)malloc(sizeof(struct write_req_t));
 		__bad_malloc_error(request);
 
+		uint16_t* sendbuf = (uint16_t*)malloc(
+			sizeof(uint16_t) + (length * sizeof(ws2811_led_t)));
+
+		sendbuf[0] = length;
+		memcpy(&(sendbuf[1]), strip_crightbuf(&strip, channel),
+			length * sizeof(ws2811_led_t));
+
 		request->buf = uv_buf_init(
-			(char*)hton_buffer(strip_crightbuf(&strip, channel), length),
-			length * sizeof(ws2811_led_t)); 
+			sendbuf,
+			sizeof(uint16_t) + length * sizeof(ws2811_led_t)); 
 		uv_write((uv_write_t*)request, stream, &(request->buf), 1, xpc_write_cb);
 		break;
 

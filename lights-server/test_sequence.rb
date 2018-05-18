@@ -1,4 +1,4 @@
-require '../api-server/src/modules/device_client'
+require '../api-server/app/helpers/device_client'
 
 address = 'raspberrypi.local'
 port = 7890
@@ -7,6 +7,10 @@ dev = DeviceClient.new address, port
 dev.connect
 
 puts "Connected to #{address}:#{port}."
+
+puts "Setting strip off"
+dev.set_state 0, 'off'
+sleep 2
 
 puts "Setting strip on."
 dev.set_state 0, 'on'
@@ -31,5 +35,5 @@ dev.shift 0, +3, color_i(0, 0, 255, 0)
 
 sleep 2
 
-puts "Shifting white NEGATIVE"
+puts "Shifting green NEGATIVE"
 dev.shift 0, -3, color_i(0, 0, 255, 0)

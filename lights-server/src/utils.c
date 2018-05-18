@@ -56,3 +56,13 @@ ws2811_led_t* hton_buffer(ws2811_led_t* buffer, size_t len) {
 
 	return resbuf;
 }
+
+ws2811_led_t* inline_hton_buffer(ws2811_led_t* buffer, size_t len) {
+	size_t i;
+	ws2811_led_t* resbuf;
+
+	for (i = 0; i < len; i++)
+		buffer[i] = (ws2811_led_t)htonl(buffer[i]);
+
+	return buffer;
+}
