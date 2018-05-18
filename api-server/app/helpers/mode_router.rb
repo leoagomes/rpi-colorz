@@ -14,7 +14,7 @@ module Colors
 
     def send_mode(mode)
       begin
-        @publisher.send_string({:action => 'mode', :data => mode}.to_msgpack)
+        @publisher.send_string({:event => 'mode', :data => mode}.to_msgpack)
         true
       rescue
         false
@@ -23,7 +23,7 @@ module Colors
 
     def send_params(params)
       begin
-        @publisher.send_string({:action => 'params', :data => params}.to_msgpack)
+        @publisher.send_string({:event => 'params', :data => params}.to_msgpack)
         true
       rescue
         false
