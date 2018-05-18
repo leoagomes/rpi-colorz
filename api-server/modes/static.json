@@ -1,5 +1,5 @@
 {
-  "id": "base/static",
+  "id": "base@static",
   "strings": {
     "en": {
       "name": "Static",
@@ -30,5 +30,8 @@
     }
   },
 
-  "data": {}
+  "data": {
+    "realtime": false,
+    "data": "bG9jYWwgdXBkYXRlID0gZnVuY3Rpb24oKQ0KICBkZXZpY2U6ZmlsbCgwLCAyNTUpDQplbmQNCg0KbG9jYWwgdXBkYXRlX3BhcmFtcyA9IGZ1bmN0aW9uKHBhcmFtcykNCmVuZA0KDQpyZXR1cm4gew0KWyJ1cGRhdGUiXSA9IHVwZGF0ZSwNClsidXBkYXRlX3BhcmFtcyJdID0gdXBkYXRlX3BhcmFtcywNCn0="
+  }
 }

@@ -81,6 +81,19 @@ module Colors
         end
       end
 
+      get '/modes/:id' do
+        id = params['id']
+        mode = @service.find id
+
+        if mode.nil?
+          status 404
+          json :error => 'Id not found.'
+        else
+          status 200
+          json mode
+        end
+      end
+
       put '/modes/:id' do
         id = params['id']
         data = JSON.parse request.body.read
