@@ -1,5 +1,5 @@
 
-module Colors
+module Rainbow
   module Entities
 
     class Mode

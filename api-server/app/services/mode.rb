@@ -2,7 +2,7 @@ require 'pstore'
 
 require_relative '../helpers/mode_router'
 
-module Colors
+module Rainbow
   module Services
     class ModeService
       def initialize(store)

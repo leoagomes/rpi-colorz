@@ -4,7 +4,7 @@ require 'json'
 
 require_relative '../helpers/device_client'
 
-module Colors
+module Rainbow
   module Routes
 
     class Strips < Sinatra::Base

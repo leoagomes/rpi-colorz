@@ -1,6 +1,6 @@
 require 'sinatra/base'
 
-module Colors
+module Rainbow
   class Base < Sinatra::Base
     configure :development do
       register Sinatra::Reloader

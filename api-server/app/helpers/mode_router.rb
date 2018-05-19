@@ -1,7 +1,7 @@
 require 'msgpack'
 require 'ffi-rzmq'
 
-module Colors
+module Rainbow
   class ModeRouter
     # TODO: better handle disconnections
 

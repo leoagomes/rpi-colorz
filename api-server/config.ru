@@ -10,4 +10,4 @@ use Rack::Protection::PathTraversal
 
 # TODO: use David
 
-run Colors::App
+run Rainbow::App

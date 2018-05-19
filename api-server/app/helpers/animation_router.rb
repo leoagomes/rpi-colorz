@@ -1,6 +1,6 @@
 require 'ffi-rzmq'
 
-module Colors
+module Rainbow
   module Helpers
     def error_check(result)
       if ZMQ::Util.resultcode_ok? result

@@ -13,7 +13,7 @@ env_defaults 'XPC_DEVICE_ADDRESS' => 'raspberrypi.local',
              'XPC_DEVICE_PORT' => '7890',
              'MODE_PUB_HOST' => 'tcp://*:5555'
 
-module Colors
+module Rainbow
   class App < Base
     use Routes::Modes
     use Routes::Strips

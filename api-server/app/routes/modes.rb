@@ -5,11 +5,11 @@ require 'json'
 require_relative '../services/mode'
 require_relative '../helpers/mode_helpers'
 
-module Colors
+module Rainbow
   module Routes
 
-    class Modes < Colors::Base
-      helpers Colors::Helpers::Mode
+    class Modes < Rainbow::Base
+      helpers Rainbow::Helpers::Mode
 
       def initialize(app)
         super

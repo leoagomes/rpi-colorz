@@ -1,5 +1,5 @@
 
-module Colors
+module Rainbow
   module Helpers
     module Mode
       def valid_mode?(map)
