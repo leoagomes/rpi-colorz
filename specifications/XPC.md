@@ -2,10 +2,10 @@
 
 **NOTE: this is currently undergoing refactoring.** I don't intend on changing
 the functionality described in this file, but I do plan on changing some of the
-names of some of the operations (like 'splicing'). If you feel like you could
-contribute to any of this, please send a PR.
+names of some of the operations. If you feel like you could contribute to any
+of this, please send a PR.
 
-XPC is based on OPC, and xtends its operations by adding splicing, shifting,
+XPC is based on OPC, and xtends its operations by adding replacing, shifting,
 rotating, etc. There is also the QPC, which is a Quicker alternative to XPC,
 relying on UDP for quick remote-control-like actions that require no reply.
 QPC message formats are the same as XPC's.
@@ -14,6 +14,7 @@ Throughout the description of the supported messages, the following types will
 appear.
 
 | Doc Name | C Name       | Brief Description
+| -------- | ------------ | -----------------
 | byte     | uint8_t      | 8-bit unsigned integer
 | char     | char         | 8-bit singed integer
 | (u)short | (u)int16_t   | 16-bit (un)signed integer
@@ -49,33 +50,28 @@ provided below. Keep in mind the format's first two fields `[op]` and `[channel]
 are omitted to keep this document visually clean, but should be provided in a
 real message.
 
-+============+========+========
 | Operation  | Opcode | Format
-+------------+--------+--------
+| ---------- | ------ | ------
 | start set  | 0x00   | `[ushort: length][led_t[length]: buffer]`
-| splice     | 0x01   | `[ushort: start][ushort: length][led_t[length]: buffer]`
+| replace    | 0x01   | `[ushort: start][ushort: length][led_t[length]: buffer]`
 | insert     | 0x02   | `[ushort: start][ushort: length][led_t[length]: buffer]`
 | rotate     | 0x03   | `[short: amount]`
 | shift      | 0x04   | `[short: amount][led_t: in]`
 | fill       | 0x05   | `[led_t: color]`
 | set index  | 0x06   | `[ushort: index][led_t: color]`
-+------------+--------+--------
 | read       | 0x10   | ``
-+------------+--------+--------
 | get count  | 0x20   | ``
 | set count  | 0x21   | `[short: new_count]`
 | get state  | 0x22   | ``
 | set state  | 0x23   | `[byte: state]`
-+------------+--------+--------
 | get #strips| 0xFE   | `* (see documentation)`
 | reserved   | 0xFF   | `(args...)`
-+=============+========+========
 
 #### `start set`
 
 Sets the `length` first leds to what's in `buffer`.
 
-#### `splice`
+#### `replace`
 
 Substitutes led colors index `start` through `start + length` by the ones in
 `buffer`.

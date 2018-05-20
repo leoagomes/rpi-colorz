@@ -1,4 +1,4 @@
-# rpi-colorz
+# rpi-rainbow
 
 **NOTE: this repository is a work in progress.** Even more importantly it is
 undergoing a refactoring since the code isn't exactly as I want it to be. My
@@ -13,6 +13,10 @@ This repository aims to provide 3 major tools: an XPC (eXtended Pixel Control)
 protocol server, a animation/mode runner and a REST server that glues them
 together in a single API.
 
+This project encompasses all that you see, taste and feel. I hope it is all you
+love, not hate. It should be safe enough for you not to distrust it. Help me
+create it.
+
 ## XPC Server
 
 ### XPC (eXtended Pixel Control) Protocol
@@ -20,7 +24,7 @@ together in a single API.
 XPC is a protocol (somewhat loosely) based on [OPC](openpixelcontrol.org) that
 provides a way to precisely control via the network an addressable LED strip
 (such as the WS2811). It should be defined better in
-[its own documentation file](./lights-server/XPC.md).
+[its own documentation file](./specifications/XPC.md).
 
 ### Server
 

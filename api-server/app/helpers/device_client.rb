@@ -2,7 +2,7 @@ require 'socket'
 
 module DeviceProtocol
   OP_BUFFER_START_SET = 0x00
-  OP_BUFFER_SPLICE = 0x01
+  OP_BUFFER_REPLACE = 0x01
   OP_BUFFER_INSERT = 0x02
   OP_BUFFER_ROTATE = 0x03
   OP_BUFFER_SHIFT = 0x04
@@ -105,8 +105,8 @@ class DeviceClient
     send data
   end
 
-  def splice(strip, buffer, start)
-    data_array = [DeviceProtocol::OP_BUFFER_SPLICE, strip.to_int]
+  def replace(strip, buffer, start)
+    data_array = [DeviceProtocol::OP_BUFFER_REPLACE, strip.to_int]
     data_array << start.to_int << buffer.length << buffer
     data = data_array.flatten.pack 'CCnnN*'
     send data

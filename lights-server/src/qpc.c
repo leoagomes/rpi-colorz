@@ -53,7 +53,7 @@ void qpc_packet_parse(const uv_buf_t* buf) {
 			length);
 		strip_renderNPM(strip);
 		break;
-	case PROTO_BUFFER_SPLICE: // buffer splice: [op: 1][short: start][short: end][uint8_t*: data]
+	case PROTO_BUFFER_REPLACE: // buffer replace: [op: 1][short: start][short: end][uint8_t*: data]
 		start = as_ushort(&(buffer[2]));
 		end = as_ushort(&(buffer[4]));
 

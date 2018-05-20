@@ -108,7 +108,7 @@ void xpc_packet_parse(uv_stream_t* stream, uv_buf_t* buf) {
 		strip_renderNPM(strip);
 		break;
 
-	case PROTO_BUFFER_SPLICE: // buffer splice: [op][channel][short: start][short: end][uint8_t*: data]
+	case PROTO_BUFFER_REPLACE: // buffer replace: [op][channel][short: start][short: end][uint8_t*: data]
 		start = ntohs(as_ushort(&(buffer[2])));
 		end = ntohs(as_ushort(&(buffer[4])));
 
